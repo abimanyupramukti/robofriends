@@ -5,44 +5,50 @@ import Scroll from '../components/Scroll';
 import SearchBox from '../components/SearchBox';
 import './App.css'
 import ErrorBoundary from '../components/ErrorBoundary';
+import{setSearchField, requestRobots} from '../actions'
+import {connect} from 'react-redux'
 
-export default class App extends Component{
-    constructor(){
-        super();
-        this.state = {
-            robots:[],
-            searchField:''
-        }
+
+const mapStateToProprs = state => {
+    return{
+        searchField: state.searchRobots.searchField,
+        robots: state.requestRobots.robots,
+        isPending: state.requestRobots.robots,
     }
+}
+
+const mapDispatchToProps = (dispatch)=>{
+    return {
+        onSearchChange: (event) => dispatch(setSearchField(event.target.value)),
+        onRequestRobots: ()=>{dispatch(requestRobots())}
+    }
+}
+
+class App extends Component{
     
   
     componentDidMount(){
-        fetch("https://jsonplaceholder.typicode.com/users")
-        .then(Response=>Response.json())
-        .then(users=>{
-            this.setState({robots: users})
-        })
-    }
-
-    onSearchChange = (event) => {
-        this.setState( {searchField: event.target.value})
+      this.props.onRequestRobots()
     }
 
     render(){
-        const {robots, searchField} = this.state;
+        const {searchField, onSearchChange, robots, isPending} = this.props;
         const filteredRobots = robots.filter(robot=>{
             return robot.name.toLowerCase().includes(searchField.toLowerCase())
         })
-        return(
-            <div className='tc'>
+        return !isPending ? 
+        <h1 className='tc'>Loading</h1> :
+        (<div className='tc'>
                 <h1>Robofriends</h1>
-                <SearchBox searchChange={this.onSearchChange}></SearchBox>
+                <SearchBox searchChange={onSearchChange}></SearchBox>
                 <Scroll >
                     <ErrorBoundary>
                         <CardList robots={filteredRobots}></CardList>
                     </ErrorBoundary>
                 </Scroll>
-            </div>
-        )
+        </div>)
+             
     }
 }
+
+export default connect(mapStateToProprs, mapDispatchToProps)(App)
